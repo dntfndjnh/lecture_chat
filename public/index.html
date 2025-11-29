@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>임시 채팅</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .chat-container {
+      width: 400px;
+      max-width: 90%;
+      height: 500px; /* 채팅창 전체 높이 고정 */
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      background: #007bff;
+      color: #fff;
+      padding: 15px;
+      font-size: 18px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #chat {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      background: #f9f9f9;
+    }
+
+    .message {
+      padding: 8px 12px;
+      margin: 5px 0;
+      border-radius: 12px;
+      max-width: 100%;
+      word-wrap: break-word;
+      background: #e2e2e2;
+      color: #333;
+      text-align: left; /* 항상 왼쪽 정렬 */
+    }
+
+    .input-container {
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+
+    #msg {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      outline: none;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 0 20px;
+      border: none;
+      background: #007bff;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    #user-count {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="header">
+      임시 채팅
+      <span id="user-count">접속자: 0</span>
+    </div>
+    <div id="chat"></div>
+    <div class="input-container">
+      <input id="msg" placeholder="메시지 입력" />
+      <button onclick="send()">전송</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const chat = document.getElementById("chat");
+    const userCountDiv = document.getElementById("user-count");
+    const input = document.getElementById("msg");
+
+    // 서버에서 접속자 수 업데이트
+    socket.on("user-count", (count) => {
+      userCountDiv.textContent = `접속자: ${count}`;
+    });
+
+    // 서버에서 채팅 메시지 수신
+    socket.on("chat", (msg) => {
+      const div = document.createElement("div");
+      div.textContent = msg;
+      div.classList.add("message"); // 모두 같은 스타일, 왼쪽 정렬
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    });
+
+    function send() {
+      if(input.value.trim() !== "") {
+        socket.emit("chat", input.value); // 서버로만 전송
+        input.value = ""; // 입력창 초기화
+      }
+    }
+
+    // Enter 키로 전송
+    input.addEventListener("keypress", function(e) {
+      if(e.key === "Enter") send();
+    });
+  </script>
+</body>
+</html>

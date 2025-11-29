@@ -1,0 +1,15 @@
+[빌드시]
+docker build -t chat-server .
+
+
+[실행시]
+docker run -p 3000:3000 chat-server
+
+http://localhost:3000
+
+http://[ipv4]:3000
+
+
+[중지시]
+docker ps
+docker stop <컨테이너ID>
