@@ -4,6 +4,8 @@ docker build -t chat-server .
 
 [실행시]
 docker run -p 3000:3000 chat-server
+docker run -p 3000:3000 -v /C/Users/user/Desktop/lecture_chat/logs:/usr/src/app/logs chat-server
+(마운트시, 로그 파일 로컬저장)
 
 http://localhost:3000
 
