@@ -4,93 +4,19 @@
 <meta charset="UTF-8">
 <title>강의 질의 채팅</title>
 <style>
-body {
-  font-family: 'Arial', sans-serif;
-  background: #f4f6f8;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
-}
-.chat-container {
-  width: 400px;
-  max-width: 90%;
-  height: 500px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.header {
-  background: #007bff;
-  color: #fff;
-  padding: 15px;
-  font-size: 18px;
-  font-weight: bold;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-#chat {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
-  background: #f9f9f9;
-}
-.message {
-  padding: 8px 12px;
-  margin: 5px 0;
-  border-radius: 12px;
-  max-width: 100%;
-  background: #e2e2e2;
-  color: #333;
-}
-.message-time {
-  font-size: 10px;
-  color: #555;
-  margin-right: 5px;
-}
-.input-container {
-  display: flex;
-  border-top: 1px solid #ddd;
-}
-#msg {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  outline: none;
-  font-size: 14px;
-}
-button {
-  padding: 0 20px;
-  border: none;
-  background: #007bff;
-  color: #fff;
-  cursor: pointer;
-  font-size: 14px;
-}
-button:hover {
-  background: #0056b3;
-}
-#user-count {
-  font-size: 14px;
-  opacity: 0.8;
-}
-.controls {
-  margin-top: 5px;
-  display: flex;
-  justify-content: flex-end;
-  padding: 5px 10px;
-}
-.notice {
-  font-size: 12px;
-  color: #555;
-  text-align: center;
-  padding: 5px;
-}
+body { font-family: 'Arial', sans-serif; background: #f4f6f8; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+.chat-container { width: 400px; max-width: 90%; height: 500px; background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+.header { background: #007bff; color: #fff; padding: 15px; font-size: 18px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+#chat { flex: 1; padding: 10px; overflow-y: auto; background: #f9f9f9; }
+.message { padding: 8px 12px; margin: 5px 0; border-radius: 12px; max-width: 100%; background: #e2e2e2; color: #333; }
+.message-time { font-size: 10px; color: #555; margin-right: 5px; }
+.input-container { display: flex; border-top: 1px solid #ddd; }
+#msg { flex: 1; padding: 10px; border: none; outline: none; font-size: 14px; }
+button { padding: 0 20px; border: none; background: #007bff; color: #fff; cursor: pointer; font-size: 14px; }
+button:hover { background: #0056b3; }
+#user-count { font-size: 14px; opacity: 0.8; }
+.controls { margin-top: 5px; display: flex; justify-content: flex-end; padding: 5px 10px; }
+.notice { font-size: 12px; color: #555; text-align: center; padding: 5px; }
 </style>
 </head>
 <body>
@@ -99,30 +25,34 @@ button:hover {
     <span id="lecture-title">강의 질의 채팅</span>
     <span id="user-count">접속자: 0</span>
   </div>
-
   <div id="chat"></div>
-
   <div class="input-container">
     <input id="msg" placeholder="메시지 입력" />
     <button onclick="send()">전송</button>
   </div>
-
   <div class="controls">
     <button onclick="savePDF()">PDF 저장</button>
   </div>
-
   <div class="notice">
     ⚠️ 채팅 내 폭력적·모욕적·불법적 발언은 민·형사상 책임을 질 수 있습니다.
   </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
+const { jsPDF } = window.jspdf;
 const socket = io();
 const chat = document.getElementById("chat");
 const userCountDiv = document.getElementById("user-count");
 const lectureTitle = document.getElementById("lecture-title");
 const input = document.getElementById("msg");
+
+// 알림 권한 요청
+if (Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
 
 // 강의명
 socket.on("lecture-name", (name) => {
@@ -136,7 +66,12 @@ socket.on("user-count", (count) => {
 
 // 채팅 수신
 socket.on("chat", (data) => {
-  addMessage(data.message, data.time); // time 문자열 그대로 사용
+  addMessage(data.message, data.time);
+
+  // 페이지 비활성화 시 알림
+  if (document.hidden && Notification.permission === "granted") {
+    new Notification("새 질문 도착!", { body: data.message });
+  }
 });
 
 // 메시지 출력
@@ -152,7 +87,6 @@ function addMessage(msg, time) {
 function send() {
   const text = input.value.trim();
   if (text === "") return;
-
   socket.emit("chat", text);
   input.value = "";
 }
@@ -161,6 +95,33 @@ function send() {
 input.addEventListener("keypress", (e) => {
   if (e.key === "Enter") send();
 });
+
+// PDF 저장
+function savePDF() {
+  const chatContainer = document.querySelector(".chat-container");
+  html2canvas(chatContainer, { scale: 2 }).then(canvas => {
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pdfWidth = 210;
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+    let position = 0;
+    let remainingHeight = pdfHeight;
+
+    while (remainingHeight > 0) {
+      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+      remainingHeight -= 297;
+      if (remainingHeight > 0) {
+        pdf.addPage();
+        position = -297;
+      }
+    }
+
+    const now = new Date();
+    const filename = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}_chat.pdf`;
+    pdf.save(filename);
+  });
+}
 </script>
 </body>
 </html>
