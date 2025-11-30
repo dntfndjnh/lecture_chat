@@ -4,14 +4,14 @@ docker build -t chat-server .
 
 [실행시]
 docker run -p 3000:3000 chat-server 또는(도커로 실행시 로그 파일 저장 로컬에 안됨)
+
 또는
 docker run -p 3000:3000 -v /C/Users/user/Desktop/lecture_chat/logs:/usr/src/app/logs chat-server
 (마운트 이용, for 로그 파일 로컬저장)
+
 또는
-docker run -p 3000:3000 
-  -e LECTURE_NAME="강의명" 
-  -v /C/Users/user/Desktop/lecture_chat/logs:/usr/src/app/logs 
-  chat-server
+docker run -p 3000:3000 -e LECTURE_NAME="강의명" -v C:/Users/user/Desktop/lecture_chat/logs:/usr/src/app/logs chat-server
+
 (강의명 지정할 시)
 
 http://localhost:3000
