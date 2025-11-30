@@ -98,7 +98,7 @@ button:hover {
 <body>
 <div class="chat-container">
   <div class="header">
-    강의 질의 채팅
+    <span id="lecture-title">강의 질의 채팅</span>
     <span id="user-count">접속자: 0</span>
   </div>
   <div id="chat"></div>
@@ -122,7 +122,13 @@ const { jsPDF } = window.jspdf;
 const socket = io();
 const chat = document.getElementById("chat");
 const userCountDiv = document.getElementById("user-count");
+const lectureTitle = document.getElementById("lecture-title");
 const input = document.getElementById("msg");
+
+// 서버에서 강의명 받기
+socket.on("lecture-name", (name) => {
+  lectureTitle.textContent = `${name} 질의 채팅`;
+});
 
 // 접속자 수 업데이트
 socket.on("user-count", (count) => {
@@ -131,14 +137,17 @@ socket.on("user-count", (count) => {
 
 // 채팅 메시지 수신
 socket.on("chat", (data) => {
-  // data: { time, message }
   const div = document.createElement("div");
   div.classList.add("message");
 
   const timeSpan = document.createElement("span");
   timeSpan.classList.add("message-time");
+
   const dateObj = new Date(data.time);
-  timeSpan.textContent = `[${dateObj.getHours().toString().padStart(2,"0")}:${dateObj.getMinutes().toString().padStart(2,"0")}:${dateObj.getSeconds().toString().padStart(2,"0")}] `;
+  timeSpan.textContent =
+    `[${dateObj.getHours().toString().padStart(2,"0")}:` +
+    `${dateObj.getMinutes().toString().padStart(2,"0")}:` +
+    `${dateObj.getSeconds().toString().padStart(2,"0")}] `;
 
   div.appendChild(timeSpan);
   div.appendChild(document.createTextNode(data.message));
@@ -160,7 +169,7 @@ input.addEventListener("keypress", function(e) {
   if(e.key === "Enter") send();
 });
 
-// 화면 전체 채팅 PDF로 저장
+// PDF 저장
 function savePDF() {
   const chatContainer = document.querySelector(".chat-container");
   html2canvas(chatContainer, { scale: 2 }).then(canvas => {
@@ -168,6 +177,7 @@ function savePDF() {
     const pdf = new jsPDF("p", "mm", "a4");
     const pdfWidth = 210;
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
     let position = 0;
     let remainingHeight = pdfHeight;
 
@@ -181,7 +191,7 @@ function savePDF() {
     }
 
     const now = new Date();
-    const filename = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}_${now.getHours()}-${now.getMinutes()}_chat.pdf`;
+    const filename = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}_chat.pdf`;
     pdf.save(filename);
   });
 }
